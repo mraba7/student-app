@@ -1,11 +1,12 @@
-<meta name='viewport' content='width=device-width, initial-scale=1'/><!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>إدارة الطلاب</title>
+    <title>نظام إدارة الطلاب</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -15,50 +16,82 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
             min-height: 100vh;
-            padding: 10px;
+            padding: 0;
+        }
+
+        .top-bar {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .school-name {
+            font-size: 18px;
+            font-weight: bold;
+            color: #1e3c72;
+        }
+
+        .school-name.empty {
+            color: #999;
+            font-style: italic;
+        }
+
+        .top-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn-top {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-settings {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-export {
+            background: #26de81;
+            color: white;
+        }
+
+        .btn-stats {
+            background: #ffa502;
+            color: white;
         }
 
         .container {
-            max-width: 600px;
-            margin: 0 auto;
+            max-width: 1200px;
+            margin: 20px auto;
             background: white;
-            border-radius: 20px;
+            border-radius: 15px;
             overflow: hidden;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-        }
-
-        .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 20px;
-            text-align: center;
-        }
-
-        .header h1 {
-            font-size: 24px;
-            margin-bottom: 5px;
-        }
-
-        .header .count {
-            background: rgba(255,255,255,0.2);
-            display: inline-block;
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-size: 14px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
         }
 
         .tabs {
             display: flex;
-            background: #f5f5f5;
+            background: #f8f9fa;
+            overflow-x: auto;
             border-bottom: 2px solid #e0e0e0;
         }
 
         .tab {
-            flex: 1;
-            padding: 15px 10px;
-            text-align: center;
+            padding: 15px 20px;
             background: none;
             border: none;
             font-size: 14px;
@@ -67,94 +100,151 @@
             cursor: pointer;
             transition: all 0.3s;
             border-bottom: 3px solid transparent;
+            white-space: nowrap;
         }
 
         .tab.active {
-            color: #667eea;
+            color: #1e3c72;
             background: white;
-            border-bottom-color: #667eea;
+            border-bottom-color: #1e3c72;
         }
 
         .content {
             padding: 20px;
-            min-height: 400px;
+        }
+
+        .search-bar {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .search-input {
+            flex: 1;
+            min-width: 200px;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 15px;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #1e3c72;
+        }
+
+        .select-box {
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 15px;
+            min-width: 150px;
+            background: white;
         }
 
         .input-group {
             display: flex;
             gap: 10px;
             margin-bottom: 20px;
+            flex-wrap: wrap;
         }
 
-        input[type="text"] {
-            flex: 1;
+        input, select, textarea {
             padding: 12px;
             border: 2px solid #e0e0e0;
             border-radius: 10px;
-            font-size: 16px;
+            font-size: 15px;
+            font-family: inherit;
         }
 
-        input[type="text"]:focus {
+        input:focus, select:focus, textarea:focus {
             outline: none;
-            border-color: #667eea;
+            border-color: #1e3c72;
         }
 
         .btn {
             padding: 12px 20px;
             border: none;
             border-radius: 10px;
-            font-size: 16px;
+            font-size: 15px;
             font-weight: bold;
             cursor: pointer;
             transition: all 0.3s;
+            white-space: nowrap;
         }
 
         .btn-primary {
-            background: #667eea;
+            background: #1e3c72;
             color: white;
         }
 
         .btn-primary:active {
-            background: #5568d3;
             transform: scale(0.95);
         }
 
-        .student-item {
-            background: #f9f9f9;
+        .btn-success {
+            background: #26de81;
+            color: white;
+        }
+
+        .btn-danger {
+            background: #ff4757;
+            color: white;
+        }
+
+        .btn-warning {
+            background: #ffa502;
+            color: white;
+        }
+
+        .student-card {
+            background: #f8f9fa;
             padding: 15px;
-            margin-bottom: 10px;
-            border-radius: 10px;
+            margin-bottom: 15px;
+            border-radius: 12px;
+            border: 2px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .student-card:hover {
+            border-color: #1e3c72;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .student-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            margin-bottom: 10px;
         }
 
         .student-name {
             font-weight: bold;
-            font-size: 16px;
+            font-size: 17px;
+            color: #1e3c72;
         }
 
-        .btn-delete {
-            background: #ff4757;
-            color: white;
-            padding: 8px 15px;
-            border: none;
+        .student-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 13px;
             border-radius: 8px;
-            cursor: pointer;
-        }
-
-        .btn-delete:active {
-            background: #ee3344;
         }
 
         .status-buttons {
             display: flex;
             gap: 8px;
-            margin-top: 10px;
+            flex-wrap: wrap;
         }
 
         .status-btn {
             flex: 1;
+            min-width: 90px;
             padding: 10px;
             border: 2px solid;
             border-radius: 8px;
@@ -162,6 +252,7 @@
             font-weight: bold;
             cursor: pointer;
             transition: all 0.2s;
+            font-size: 14px;
         }
 
         .status-btn.present {
@@ -194,11 +285,6 @@
             color: white;
         }
 
-        .status-btn.completed {
-            border-color: #26de81;
-            color: #26de81;
-        }
-
         .status-btn.completed.active {
             background: #26de81;
             color: white;
@@ -224,289 +310,591 @@
             color: white;
         }
 
-        .participation-count {
-            color: #666;
-            font-size: 14px;
+        .note-section {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #e0e0e0;
         }
 
-        .btn-add-participation {
-            background: #667eea;
-            color: white;
-            padding: 8px 15px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
+        .note-text {
             font-size: 14px;
+            color: #666;
+            font-style: italic;
+            margin-top: 5px;
         }
 
-        .date-info {
-            color: #666;
+        .note-text.empty {
+            color: #999;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 500px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #1e3c72;
+        }
+
+        .modal-body {
+            margin-bottom: 20px;
+        }
+
+        .modal-footer {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .form-group {
             margin-bottom: 15px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .form-input {
+            width: 100%;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 36px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
             font-size: 14px;
+            opacity: 0.9;
         }
 
         .empty-state {
             text-align: center;
-            padding: 40px;
+            padding: 60px 20px;
             color: #999;
         }
 
-        .hidden {
-            display: none;
+        .empty-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+
+        .session-info {
+            background: #f0f4ff;
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            font-size: 14px;
+        }
+
+        .session-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .session-label {
+            font-weight: bold;
+            color: #1e3c72;
+        }
+
+        @media (max-width: 768px) {
+            .top-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .top-actions {
+                justify-content: center;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>📚 إدارة الطلاب</h1>
-            <div class="count" id="studentCount">0 طالب</div>
+    <!-- Top Bar -->
+    <div class="top-bar">
+        <div class="school-name" id="displaySchoolName">اضغط لإضافة اسم المدرسة</div>
+        <div class="top-actions">
+            <button class="btn-top btn-settings" onclick="openSettings()">⚙️ الإعدادات</button>
+            <button class="btn-top btn-stats" onclick="switchTab('statistics')">📊 الإحصائيات</button>
+            <button class="btn-top btn-export" onclick="openExportModal()">📥 تصدير</button>
         </div>
+    </div>
 
+    <!-- Main Container -->
+    <div class="container">
         <div class="tabs">
-            <button class="tab active" onclick="switchTab('students')">الطلاب</button>
+            <button class="tab active" onclick="switchTab('classes')">الفصول</button>
+            <button class="tab" onclick="switchTab('students')">الطلاب</button>
             <button class="tab" onclick="switchTab('attendance')">الحضور</button>
             <button class="tab" onclick="switchTab('participation')">المشاركة</button>
             <button class="tab" onclick="switchTab('homework')">الواجبات</button>
         </div>
 
         <div class="content">
-            <!-- Students Tab -->
-            <div id="studentsTab">
+            <!-- Classes Tab -->
+            <div id="classesTab">
                 <div class="input-group">
-                    <input type="text" id="studentNameInput" placeholder="اسم الطالب" onkeypress="if(event.key==='Enter') addStudent()">
-                    <button class="btn btn-primary" onclick="addStudent()">➕ إضافة</button>
+                    <input type="text" id="classNameInput" placeholder="اسم الفصل (مثال: 1أ)" class="form-input" style="flex:1">
+                    <button class="btn btn-primary" onclick="addClass()">➕ إضافة فصل</button>
+                </div>
+                <div id="classesList"></div>
+            </div>
+
+            <!-- Students Tab -->
+            <div id="studentsTab" class="hidden">
+                <div class="search-bar">
+                    <input type="text" id="studentSearch" class="search-input" placeholder="🔍 بحث عن طالب..." oninput="updateUI()">
+                    <select id="filterClass" class="select-box" onchange="updateUI()">
+                        <option value="">جميع الفصول</option>
+                    </select>
+                    <select id="sortStudents" class="select-box" onchange="updateUI()">
+                        <option value="name">ترتيب حسب الاسم</option>
+                        <option value="class">ترتيب حسب الفصل</option>
+                        <option value="recent">الأحدث أولاً</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <input type="text" id="studentNameInput" placeholder="اسم الطالب" style="flex:1">
+                    <select id="studentClassSelect" style="min-width:120px">
+                        <option value="">اختر الفصل</option>
+                    </select>
+                    <button class="btn btn-primary" onclick="addStudent()">➕ إضافة طالب</button>
                 </div>
                 <div id="studentsList"></div>
             </div>
 
             <!-- Attendance Tab -->
             <div id="attendanceTab" class="hidden">
-                <div class="date-info" id="attendanceDate"></div>
+                <div class="session-info">
+                    <div class="session-item">
+                        <span class="session-label">📅 التاريخ:</span>
+                        <span id="attendanceDate"></span>
+                    </div>
+                    <div class="session-item">
+                        <span class="session-label">📚 الحصة:</span>
+                        <select id="sessionSelect" onchange="updateUI()">
+                            <option value="1">الحصة الأولى</option>
+                            <option value="2">الحصة الثانية</option>
+                            <option value="3">الحصة الثالثة</option>
+                            <option value="4">الحصة الرابعة</option>
+                            <option value="5">الحصة الخامسة</option>
+                            <option value="6">الحصة السادسة</option>
+                            <option value="7">الحصة السابعة</option>
+                        </select>
+                    </div>
+                    <div class="session-item">
+                        <span class="session-label">🏫 الفصل:</span>
+                        <select id="attendanceClassFilter" onchange="updateUI()">
+                            <option value="">جميع الفصول</option>
+                        </select>
+                    </div>
+                </div>
                 <div id="attendanceList"></div>
             </div>
 
             <!-- Participation Tab -->
             <div id="participationTab" class="hidden">
+                <div class="search-bar">
+                    <select id="participationClassFilter" class="select-box" onchange="updateUI()">
+                        <option value="">جميع الفصول</option>
+                    </select>
+                </div>
                 <div id="participationList"></div>
             </div>
 
             <!-- Homework Tab -->
             <div id="homeworkTab" class="hidden">
-                <div class="date-info" id="homeworkDate"></div>
+                <div class="session-info">
+                    <div class="session-item">
+                        <span class="session-label">📅 التاريخ:</span>
+                        <span id="homeworkDate"></span>
+                    </div>
+                    <div class="session-item">
+                        <span class="session-label">🏫 الفصل:</span>
+                        <select id="homeworkClassFilter" onchange="updateUI()">
+                            <option value="">جميع الفصول</option>
+                        </select>
+                    </div>
+                </div>
                 <div id="homeworkList"></div>
+            </div>
+
+            <!-- Statistics Tab -->
+            <div id="statisticsTab" class="hidden">
+                <div class="stats-grid" id="statsGrid"></div>
+                <div id="detailedStats"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">⚙️ الإعدادات</div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">اسم المدرسة (اختياري)</label>
+                    <input type="text" id="schoolNameInput" class="form-input" placeholder="أدخل اسم المدرسة">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" onclick="saveSettings()">💾 حفظ</button>
+                <button class="btn" style="background:#ddd" onclick="closeModal('settingsModal')">إلغاء</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Note Modal -->
+    <div id="noteModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">📝 ملاحظات الطالب</div>
+            <div class="modal-body">
+                <textarea id="noteTextarea" rows="5" class="form-input" placeholder="أضف ملاحظات عن الطالب..."></textarea>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" onclick="saveNote()">💾 حفظ</button>
+                <button class="btn" style="background:#ddd" onclick="closeModal('noteModal')">إلغاء</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Export Modal -->
+    <div id="exportModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">📥 تصدير البيانات</div>
+            <div class="modal-body">
+                <p style="margin-bottom:15px">اختر صيغة التصدير:</p>
+                <div style="display:flex; flex-direction:column; gap:10px">
+                    <button class="btn btn-danger" onclick="exportToPDF()">📄 تصدير PDF</button>
+                    <button class="btn btn-success" onclick="exportToExcel()">📊 تصدير Excel</button>
+                    <button class="btn btn-primary" onclick="exportToWord()">📝 تصدير Word</button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" style="background:#ddd" onclick="closeModal('exportModal')">إغلاق</button>
             </div>
         </div>
     </div>
 
     <script>
-        let students = [];
-        let attendance = [];
-        let participation = [];
-        let homework = [];
-        let currentTab = 'students';
+        let appData = {
+            schoolName: '',
+            classes: [],
+            students: [],
+            attendance: [],
+            participation: [],
+            homework: [],
+            notes: {}
+        };
 
-        // Load data on start
+        let currentTab = 'classes';
+        let currentNoteStudentId = null;
+
+        // Initialize
         loadData();
         updateUI();
 
         function loadData() {
-            const savedStudents = localStorage.getItem('students');
-            const savedAttendance = localStorage.getItem('attendance');
-            const savedParticipation = localStorage.getItem('participation');
-            const savedHomework = localStorage.getItem('homework');
-
-            if (savedStudents) students = JSON.parse(savedStudents);
-            if (savedAttendance) attendance = JSON.parse(savedAttendance);
-            if (savedParticipation) participation = JSON.parse(savedParticipation);
-            if (savedHomework) homework = JSON.parse(savedHomework);
+            const saved = localStorage.getItem('schoolAppData');
+            if (saved) {
+                appData = JSON.parse(saved);
+            }
+            updateSchoolName();
         }
 
         function saveData() {
-            localStorage.setItem('students', JSON.stringify(students));
-            localStorage.setItem('attendance', JSON.stringify(attendance));
-            localStorage.setItem('participation', JSON.stringify(participation));
-            localStorage.setItem('homework', JSON.stringify(homework));
+            localStorage.setItem('schoolAppData', JSON.stringify(appData));
         }
 
-        function addStudent() {
-            const input = document.getElementById('studentNameInput');
+        function updateSchoolName() {
+            const display = document.getElementById('displaySchoolName');
+            if (appData.schoolName) {
+                display.textContent = appData.schoolName;
+                display.classList.remove('empty');
+            } else {
+                display.textContent = 'اضغط لإضافة اسم المدرسة';
+                display.classList.add('empty');
+            }
+            display.onclick = openSettings;
+        }
+
+        function openSettings() {
+            document.getElementById('schoolNameInput').value = appData.schoolName || '';
+            document.getElementById('settingsModal').classList.add('active');
+        }
+
+        function saveSettings() {
+            appData.schoolName = document.getElementById('schoolNameInput').value.trim();
+            saveData();
+            updateSchoolName();
+            closeModal('settingsModal');
+        }
+
+        function addClass() {
+            const input = document.getElementById('classNameInput');
             const name = input.value.trim();
-            
-            if (name) {
-                students.push({
-                    id: Date.now(),
-                    name: name
-                });
+            if (name && !appData.classes.find(c => c.name === name)) {
+                appData.classes.push({ id: Date.now(), name });
                 input.value = '';
                 saveData();
                 updateUI();
             }
         }
 
-        function deleteStudent(id) {
-            if (confirm('هل أنت متأكد من حذف هذا الطالب؟')) {
-                students = students.filter(s => s.id !== id);
+        function deleteClass(id) {
+            if (confirm('هل أنت متأكد؟ سيتم حذف جميع الطلاب في هذا الفصل')) {
+                appData.classes = appData.classes.filter(c => c.id !== id);
+                appData.students = appData.students.filter(s => s.classId !== id);
                 saveData();
                 updateUI();
             }
         }
 
+        function addStudent() {
+            const name = document.getElementById('studentNameInput').value.trim();
+            const classId = parseInt(document.getElementById('studentClassSelect').value);
+            
+            if (name && classId) {
+                appData.students.push({
+                    id: Date.now(),
+                    name,
+                    classId,
+                    addedAt: Date.now()
+                });
+                document.getElementById('studentNameInput').value = '';
+                saveData();
+                updateUI();
+            } else {
+                alert('الرجاء إدخال اسم الطالب واختيار الفصل');
+            }
+        }
+
+        function deleteStudent(id) {
+            if (confirm('هل أنت متأكد من حذف هذا الطالب؟')) {
+                appData.students = appData.students.filter(s => s.id !== id);
+                delete appData.notes[id];
+                saveData();
+                updateUI();
+            }
+        }
+
+        function openNoteModal(studentId) {
+            currentNoteStudentId = studentId;
+            document.getElementById('noteTextarea').value = appData.notes[studentId] || '';
+            document.getElementById('noteModal').classList.add('active');
+        }
+
+        function saveNote() {
+            const note = document.getElementById('noteTextarea').value.trim();
+            if (note) {
+                appData.notes[currentNoteStudentId] = note;
+            } else {
+                delete appData.notes[currentNoteStudentId];
+            }
+            saveData();
+            updateUI();
+            closeModal('noteModal');
+        }
+
         function markAttendance(studentId, status) {
             const today = new Date().toLocaleDateString('ar-SA');
-            const index = attendance.findIndex(a => a.studentId === studentId && a.date === today);
+            const session = document.getElementById('sessionSelect').value;
+            const key = `${studentId}-${today}-${session}`;
+            
+            const index = appData.attendance.findIndex(a => 
+                a.studentId === studentId && a.date === today && a.session === session
+            );
             
             if (index >= 0) {
-                attendance[index].status = status;
+                appData.attendance[index].status = status;
             } else {
-                attendance.push({ studentId, date: today, status });
+                appData.attendance.push({ studentId, date: today, session, status });
             }
             
             saveData();
             updateUI();
         }
 
-        function getTodayAttendance(studentId) {
+        function getAttendance(studentId) {
             const today = new Date().toLocaleDateString('ar-SA');
-            const record = attendance.find(a => a.studentId === studentId && a.date === today);
+            const session = document.getElementById('sessionSelect').value;
+            const record = appData.attendance.find(a => 
+                a.studentId === studentId && a.date === today && a.session === session
+            );
             return record ? record.status : null;
         }
 
         function addParticipation(studentId) {
             const today = new Date().toLocaleDateString('ar-SA');
-            participation.push({ studentId, date: today });
+            appData.participation.push({ studentId, date: today, timestamp: Date.now() });
             saveData();
             updateUI();
         }
 
         function getParticipationCount(studentId) {
-            return participation.filter(p => p.studentId === studentId).length;
+            return appData.participation.filter(p => p.studentId === studentId).length;
         }
 
         function markHomework(studentId, status) {
             const today = new Date().toLocaleDateString('ar-SA');
-            const index = homework.findIndex(h => h.studentId === studentId && h.date === today);
+            const index = appData.homework.findIndex(h => 
+                h.studentId === studentId && h.date === today
+            );
             
             if (index >= 0) {
-                homework[index].status = status;
+                appData.homework[index].status = status;
             } else {
-                homework.push({ studentId, date: today, status });
+                appData.homework.push({ studentId, date: today, status });
             }
             
             saveData();
             updateUI();
         }
 
-        function getTodayHomework(studentId) {
+        function getHomework(studentId) {
             const today = new Date().toLocaleDateString('ar-SA');
-            const record = homework.find(h => h.studentId === studentId && h.date === today);
+            const record = appData.homework.find(h => 
+                h.studentId === studentId && h.date === today
+            );
             return record ? record.status : null;
+        }
+
+        function getFilteredStudents() {
+            let filtered = [...appData.students];
+            
+            const search = document.getElementById('studentSearch')?.value.toLowerCase();
+            if (search) {
+                filtered = filtered.filter(s => s.name.toLowerCase().includes(search));
+            }
+            
+            const classFilter = document.getElementById('filterClass')?.value;
+            if (classFilter) {
+                filtered = filtered.filter(s => s.classId === parseInt(classFilter));
+            }
+            
+            const sort = document.getElementById('sortStudents')?.value;
+            if (sort === 'name') {
+                filtered.sort((a, b) => a.name.localeCompare(b.name, 'ar'));
+            } else if (sort === 'class') {
+                filtered.sort((a, b) => a.classId - b.classId);
+            } else if (sort === 'recent') {
+                filtered.sort((a, b) => b.addedAt - a.addedAt);
+            }
+            
+            return filtered;
         }
 
         function switchTab(tab) {
             currentTab = tab;
-            
-            // Update tab buttons
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             event.target.classList.add('active');
-            
-            // Update content
             document.querySelectorAll('.content > div').forEach(d => d.classList.add('hidden'));
             document.getElementById(tab + 'Tab').classList.remove('hidden');
-            
             updateUI();
         }
 
-        function updateUI() {
-            // Update student count
-            document.getElementById('studentCount').textContent = students.length + ' طالب';
-            
-            // Update students list
-            const studentsList = document.getElementById('studentsList');
-            if (students.length === 0) {
-                studentsList.innerHTML = '<div class="empty-state">لا توجد طلاب. أضف طالباً للبدء.</div>';
-            } else {
-                studentsList.innerHTML = students.map(s => `
-                    <div class="student-item">
-                        <span class="student-name">${s.name}</span>
-                        <button class="btn-delete" onclick="deleteStudent(${s.id})">🗑️ حذف</button>
-                    </div>
-                `).join('');
-            }
-            
-            // Update attendance list
-            const attendanceList = document.getElementById('attendanceList');
-            document.getElementById('attendanceDate').textContent = '📅 التاريخ: ' + new Date().toLocaleDateString('ar-SA');
-            
-            if (students.length === 0) {
-                attendanceList.innerHTML = '<div class="empty-state">أضف طلاباً أولاً</div>';
-            } else {
-                attendanceList.innerHTML = students.map(s => {
-                    const status = getTodayAttendance(s.id);
-                    return `
-                        <div class="student-item">
-                            <div style="width: 100%;">
-                                <div class="student-name">${s.name}</div>
-                                <div class="status-buttons">
-                                    <button class="status-btn present ${status === 'present' ? 'active' : ''}" 
-                                            onclick="markAttendance(${s.id}, 'present')">حاضر</button>
-                                    <button class="status-btn absent ${status === 'absent' ? 'active' : ''}" 
-                                            onclick="markAttendance(${s.id}, 'absent')">غائب</button>
-                                    <button class="status-btn late ${status === 'late' ? 'active' : ''}" 
-                                            onclick="markAttendance(${s.id}, 'late')">متأخر</button>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                }).join('');
-            }
-            
-            // Update participation list
-            const participationList = document.getElementById('participationList');
-            if (students.length === 0) {
-                participationList.innerHTML = '<div class="empty-state">أضف طلاباً أولاً</div>';
-            } else {
-                participationList.innerHTML = students.map(s => {
-                    const count = getParticipationCount(s.id);
-                    return `
-                        <div class="student-item">
-                            <div>
-                                <div class="student-name">${s.name}</div>
-                                <div class="participation-count">المشاركات: ${count}</div>
-                            </div>
-                            <button class="btn-add-participation" onclick="addParticipation(${s.id})">➕ مشاركة</button>
-                        </div>
-                    `;
-                }).join('');
-            }
-            
-            // Update homework list
-            const homeworkList = document.getElementById('homeworkList');
-            document.getElementById('homeworkDate').textContent = '📅 التاريخ: ' + new Date().toLocaleDateString('ar-SA');
-            
-            if (students.length === 0) {
-                homeworkList.innerHTML = '<div class="empty-state">أضف طلاباً أولاً</div>';
-            } else {
-                homeworkList.innerHTML = students.map(s => {
-                    const status = getTodayHomework(s.id);
-                    return `
-                        <div class="student-item">
-                            <div style="width: 100%;">
-                                <div class="student-name">${s.name}</div>
-                                <div class="status-buttons">
-                                    <button class="status-btn completed ${status === 'completed' ? 'active' : ''}" 
-                                            onclick="markHomework(${s.id}, 'completed')">مكتمل</button>
-                                    <button class="status-btn incomplete ${status === 'incomplete' ? 'active' : ''}" 
-                                            onclick="markHomework(${s.id}, 'incomplete')">غير مكتمل</button>
-                                    <button class="status-btn partial ${status === 'partial' ? 'active' : ''}" 
-                                            onclick="markHomework(${s.id}, 'partial')">جزئي</button>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                }).join('');
-            }
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
         }
-    </script>
-</body>
-</html>
+
+        function openExportModal() {
+            document.getElementById('exportModal').classList.add('active');
+        }
+
+        function exportToPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            doc.text('تقرير الطلاب', 105, 15, { align: 'center' });
+            
+            const tableData = appData.students.map(s => {
+                const className = appData.classes.find(c => c.id === s.classId)?.name || '';
+                const participation = getParticipationCount(s.id);
+                return [s.name, className, participation.toString()];
+            });
+            
+            doc.autoTable({
+                head: [['اسم الطالب', 'الفصل', 'المشاركات']],
+                body: tableData,
+                startY: 25
+            });
+            
+            doc.save('students_report.pdf');
+            closeModal('exportModal');
+        }
+
+        function exportToExcel() {
+            const data = appData.students.map(s => ({
+                'اسم الطالب': s.name,
+                'الفصل': appData.classes.find(c => c.id === s.classId)?.name || '',
+                'المشاركات': getParticipationCount(s.id),
+                'ملاحظات': appData.notes[s.id] || ''
+            }));
+            
+            const ws = XLSX.utils.json_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'الطلاب');
+            XLSX.writeFile(wb, 'students_data.xlsx');
+            closeModal('exportModal');
+        }
+
+        function exportToWord() {
+            let html = '<html dir="rtl"><head><meta charset="utf-8"><title>تقرير الطلاب</title></head><body>';
+            html += `<h1 style="text-align:center">${appData.schoolName || 'تقرير الطلاب'}</h1>`;
+            html += '<table border="1" style="width:100%; border-collapse:collapse; margin-top:20px">';
+            html += '<tr><th>اسم الطالب</th><th>الفصل</th><th>المشاركات</th><th>ملاحظات</th></tr>';
+            
+            appData.students.forEach
