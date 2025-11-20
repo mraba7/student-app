@@ -1,0 +1,512 @@
+<meta name='viewport' content='width=device-width, initial-scale=1'/><!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>إدارة الطلاب</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 10px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+
+        .header .count {
+            background: rgba(255,255,255,0.2);
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+
+        .tabs {
+            display: flex;
+            background: #f5f5f5;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 15px 10px;
+            text-align: center;
+            background: none;
+            border: none;
+            font-size: 14px;
+            font-weight: bold;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-bottom: 3px solid transparent;
+        }
+
+        .tab.active {
+            color: #667eea;
+            background: white;
+            border-bottom-color: #667eea;
+        }
+
+        .content {
+            padding: 20px;
+            min-height: 400px;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:active {
+            background: #5568d3;
+            transform: scale(0.95);
+        }
+
+        .student-item {
+            background: #f9f9f9;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .student-name {
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .btn-delete {
+            background: #ff4757;
+            color: white;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .btn-delete:active {
+            background: #ee3344;
+        }
+
+        .status-buttons {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .status-btn {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid;
+            border-radius: 8px;
+            background: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .status-btn.present {
+            border-color: #26de81;
+            color: #26de81;
+        }
+
+        .status-btn.present.active {
+            background: #26de81;
+            color: white;
+        }
+
+        .status-btn.absent {
+            border-color: #ff4757;
+            color: #ff4757;
+        }
+
+        .status-btn.absent.active {
+            background: #ff4757;
+            color: white;
+        }
+
+        .status-btn.late {
+            border-color: #ffa502;
+            color: #ffa502;
+        }
+
+        .status-btn.late.active {
+            background: #ffa502;
+            color: white;
+        }
+
+        .status-btn.completed {
+            border-color: #26de81;
+            color: #26de81;
+        }
+
+        .status-btn.completed.active {
+            background: #26de81;
+            color: white;
+        }
+
+        .status-btn.incomplete {
+            border-color: #ff4757;
+            color: #ff4757;
+        }
+
+        .status-btn.incomplete.active {
+            background: #ff4757;
+            color: white;
+        }
+
+        .status-btn.partial {
+            border-color: #ffa502;
+            color: #ffa502;
+        }
+
+        .status-btn.partial.active {
+            background: #ffa502;
+            color: white;
+        }
+
+        .participation-count {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .btn-add-participation {
+            background: #667eea;
+            color: white;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .date-info {
+            color: #666;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📚 إدارة الطلاب</h1>
+            <div class="count" id="studentCount">0 طالب</div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('students')">الطلاب</button>
+            <button class="tab" onclick="switchTab('attendance')">الحضور</button>
+            <button class="tab" onclick="switchTab('participation')">المشاركة</button>
+            <button class="tab" onclick="switchTab('homework')">الواجبات</button>
+        </div>
+
+        <div class="content">
+            <!-- Students Tab -->
+            <div id="studentsTab">
+                <div class="input-group">
+                    <input type="text" id="studentNameInput" placeholder="اسم الطالب" onkeypress="if(event.key==='Enter') addStudent()">
+                    <button class="btn btn-primary" onclick="addStudent()">➕ إضافة</button>
+                </div>
+                <div id="studentsList"></div>
+            </div>
+
+            <!-- Attendance Tab -->
+            <div id="attendanceTab" class="hidden">
+                <div class="date-info" id="attendanceDate"></div>
+                <div id="attendanceList"></div>
+            </div>
+
+            <!-- Participation Tab -->
+            <div id="participationTab" class="hidden">
+                <div id="participationList"></div>
+            </div>
+
+            <!-- Homework Tab -->
+            <div id="homeworkTab" class="hidden">
+                <div class="date-info" id="homeworkDate"></div>
+                <div id="homeworkList"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let students = [];
+        let attendance = [];
+        let participation = [];
+        let homework = [];
+        let currentTab = 'students';
+
+        // Load data on start
+        loadData();
+        updateUI();
+
+        function loadData() {
+            const savedStudents = localStorage.getItem('students');
+            const savedAttendance = localStorage.getItem('attendance');
+            const savedParticipation = localStorage.getItem('participation');
+            const savedHomework = localStorage.getItem('homework');
+
+            if (savedStudents) students = JSON.parse(savedStudents);
+            if (savedAttendance) attendance = JSON.parse(savedAttendance);
+            if (savedParticipation) participation = JSON.parse(savedParticipation);
+            if (savedHomework) homework = JSON.parse(savedHomework);
+        }
+
+        function saveData() {
+            localStorage.setItem('students', JSON.stringify(students));
+            localStorage.setItem('attendance', JSON.stringify(attendance));
+            localStorage.setItem('participation', JSON.stringify(participation));
+            localStorage.setItem('homework', JSON.stringify(homework));
+        }
+
+        function addStudent() {
+            const input = document.getElementById('studentNameInput');
+            const name = input.value.trim();
+            
+            if (name) {
+                students.push({
+                    id: Date.now(),
+                    name: name
+                });
+                input.value = '';
+                saveData();
+                updateUI();
+            }
+        }
+
+        function deleteStudent(id) {
+            if (confirm('هل أنت متأكد من حذف هذا الطالب؟')) {
+                students = students.filter(s => s.id !== id);
+                saveData();
+                updateUI();
+            }
+        }
+
+        function markAttendance(studentId, status) {
+            const today = new Date().toLocaleDateString('ar-SA');
+            const index = attendance.findIndex(a => a.studentId === studentId && a.date === today);
+            
+            if (index >= 0) {
+                attendance[index].status = status;
+            } else {
+                attendance.push({ studentId, date: today, status });
+            }
+            
+            saveData();
+            updateUI();
+        }
+
+        function getTodayAttendance(studentId) {
+            const today = new Date().toLocaleDateString('ar-SA');
+            const record = attendance.find(a => a.studentId === studentId && a.date === today);
+            return record ? record.status : null;
+        }
+
+        function addParticipation(studentId) {
+            const today = new Date().toLocaleDateString('ar-SA');
+            participation.push({ studentId, date: today });
+            saveData();
+            updateUI();
+        }
+
+        function getParticipationCount(studentId) {
+            return participation.filter(p => p.studentId === studentId).length;
+        }
+
+        function markHomework(studentId, status) {
+            const today = new Date().toLocaleDateString('ar-SA');
+            const index = homework.findIndex(h => h.studentId === studentId && h.date === today);
+            
+            if (index >= 0) {
+                homework[index].status = status;
+            } else {
+                homework.push({ studentId, date: today, status });
+            }
+            
+            saveData();
+            updateUI();
+        }
+
+        function getTodayHomework(studentId) {
+            const today = new Date().toLocaleDateString('ar-SA');
+            const record = homework.find(h => h.studentId === studentId && h.date === today);
+            return record ? record.status : null;
+        }
+
+        function switchTab(tab) {
+            currentTab = tab;
+            
+            // Update tab buttons
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Update content
+            document.querySelectorAll('.content > div').forEach(d => d.classList.add('hidden'));
+            document.getElementById(tab + 'Tab').classList.remove('hidden');
+            
+            updateUI();
+        }
+
+        function updateUI() {
+            // Update student count
+            document.getElementById('studentCount').textContent = students.length + ' طالب';
+            
+            // Update students list
+            const studentsList = document.getElementById('studentsList');
+            if (students.length === 0) {
+                studentsList.innerHTML = '<div class="empty-state">لا توجد طلاب. أضف طالباً للبدء.</div>';
+            } else {
+                studentsList.innerHTML = students.map(s => `
+                    <div class="student-item">
+                        <span class="student-name">${s.name}</span>
+                        <button class="btn-delete" onclick="deleteStudent(${s.id})">🗑️ حذف</button>
+                    </div>
+                `).join('');
+            }
+            
+            // Update attendance list
+            const attendanceList = document.getElementById('attendanceList');
+            document.getElementById('attendanceDate').textContent = '📅 التاريخ: ' + new Date().toLocaleDateString('ar-SA');
+            
+            if (students.length === 0) {
+                attendanceList.innerHTML = '<div class="empty-state">أضف طلاباً أولاً</div>';
+            } else {
+                attendanceList.innerHTML = students.map(s => {
+                    const status = getTodayAttendance(s.id);
+                    return `
+                        <div class="student-item">
+                            <div style="width: 100%;">
+                                <div class="student-name">${s.name}</div>
+                                <div class="status-buttons">
+                                    <button class="status-btn present ${status === 'present' ? 'active' : ''}" 
+                                            onclick="markAttendance(${s.id}, 'present')">حاضر</button>
+                                    <button class="status-btn absent ${status === 'absent' ? 'active' : ''}" 
+                                            onclick="markAttendance(${s.id}, 'absent')">غائب</button>
+                                    <button class="status-btn late ${status === 'late' ? 'active' : ''}" 
+                                            onclick="markAttendance(${s.id}, 'late')">متأخر</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+            
+            // Update participation list
+            const participationList = document.getElementById('participationList');
+            if (students.length === 0) {
+                participationList.innerHTML = '<div class="empty-state">أضف طلاباً أولاً</div>';
+            } else {
+                participationList.innerHTML = students.map(s => {
+                    const count = getParticipationCount(s.id);
+                    return `
+                        <div class="student-item">
+                            <div>
+                                <div class="student-name">${s.name}</div>
+                                <div class="participation-count">المشاركات: ${count}</div>
+                            </div>
+                            <button class="btn-add-participation" onclick="addParticipation(${s.id})">➕ مشاركة</button>
+                        </div>
+                    `;
+                }).join('');
+            }
+            
+            // Update homework list
+            const homeworkList = document.getElementById('homeworkList');
+            document.getElementById('homeworkDate').textContent = '📅 التاريخ: ' + new Date().toLocaleDateString('ar-SA');
+            
+            if (students.length === 0) {
+                homeworkList.innerHTML = '<div class="empty-state">أضف طلاباً أولاً</div>';
+            } else {
+                homeworkList.innerHTML = students.map(s => {
+                    const status = getTodayHomework(s.id);
+                    return `
+                        <div class="student-item">
+                            <div style="width: 100%;">
+                                <div class="student-name">${s.name}</div>
+                                <div class="status-buttons">
+                                    <button class="status-btn completed ${status === 'completed' ? 'active' : ''}" 
+                                            onclick="markHomework(${s.id}, 'completed')">مكتمل</button>
+                                    <button class="status-btn incomplete ${status === 'incomplete' ? 'active' : ''}" 
+                                            onclick="markHomework(${s.id}, 'incomplete')">غير مكتمل</button>
+                                    <button class="status-btn partial ${status === 'partial' ? 'active' : ''}" 
+                                            onclick="markHomework(${s.id}, 'partial')">جزئي</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+        }
+    </script>
+</body>
+</html>
